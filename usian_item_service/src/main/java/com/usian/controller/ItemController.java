@@ -3,7 +3,9 @@ package com.usian.controller;
 
 import com.usian.pojo.TbItem;
 import com.usian.service.ItemService;
+import com.usian.utils.PageResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ItemController {
 
     @Autowired
-    ItemService itemService;
+    private ItemService itemService;
 
 
     /*
@@ -22,5 +24,32 @@ public class ItemController {
     public TbItem selectItemInfo(Long itemId){
         return itemService.selectItemInfo(itemId);
     }
+
+    /**
+     * 查询商品列表分页
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("selectTbItemAllByPage")
+    public PageResult selectTbItemAllByPage(Integer page,Long rows){
+        return itemService.selectTbItemAllByPage(page,rows);
+    }
+
+    /**
+     * 添加商品
+     * @param tbItem
+     * @return
+     */
+    @RequestMapping("insertTbItem")
+    public Integer insertTbItem(@RequestBody TbItem tbItem,String desc,String itemParams){
+        return itemService.insertTbItem(tbItem,desc,itemParams);
+    }
+
+    @RequestMapping("deleteItemById")
+    public Integer deleteItemById(Long itemId){
+        return itemService.deleteItemById(itemId);
+    }
+
 
 }

@@ -24,10 +24,32 @@ public class ItemParamController {
         return itemParamService.selectItemParamByItemCatId(itemCatId);
     }
 
+    /**
+     * 查询商品规格模板
+     * @param page
+     * @param rows
+     * @return
+     */
     @RequestMapping("selectItemParamAll")
     public PageResult selectItemParamAll(@RequestParam Integer page,
                                          @RequestParam Integer rows){
         return itemParamService.selectItemParamAll(page,rows);
     };
+
+    /**
+     * 添加商品规格模板
+     * @param itemCatId
+     * @param paramData
+     * @return
+     */
+    @RequestMapping("insertItemParam")
+    public Integer insertItemParam(Long itemCatId,String paramData){
+        return itemParamService.insertItemParam(itemCatId,paramData);
+    }
+
+    @RequestMapping("deleteItemParamById")
+    public Integer deleteItemParamById(@RequestParam Long id){
+        return itemParamService.deleteItemParamById(id);
+    }
 
 }

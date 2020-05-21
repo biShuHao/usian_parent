@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -48,5 +49,30 @@ public class ItemParamServiceImpl implements ItemParamService {
         pageResult.setResult(list);
         pageResult.setPageIndex(page);
         return pageResult;
+    }
+
+    @Override
+    public Integer insertItemParam(Long itemCatId, String paramData) {
+        //判断商品类目是否已有模板
+        TbItemParamExample example = new TbItemParamExample();
+        TbItemParamExample.Criteria criteria = example.createCriteria();
+        criteria.andItemCatIdEqualTo(itemCatId);
+        List<TbItemParam> tbItemParamList = tbItemParamMapper.selectByExample(example);
+        if(tbItemParamList.size()>0){
+            return 0;
+        }
+        //如果没有则添加
+        TbItemParam tbItemParam = new TbItemParam();
+        Date date = new Date();
+        tbItemParam.setCreated(date);
+        tbItemParam.setUpdated(date);
+        tbItemParam.setItemCatId(itemCatId);
+        tbItemParam.setParamData(paramData);
+        return tbItemParamMapper.insertSelective(tbItemParam);
+    }
+
+    @Override
+    public Integer deleteItemParamById(Long id) {
+        return tbItemParamMapper.deleteByPrimaryKey(id);
     }
 }

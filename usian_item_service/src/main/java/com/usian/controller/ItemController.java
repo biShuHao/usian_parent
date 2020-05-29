@@ -7,7 +7,10 @@ import com.usian.utils.PageResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/service/item")
@@ -46,9 +49,36 @@ public class ItemController {
         return itemService.insertTbItem(tbItem,desc,itemParams);
     }
 
+    /**
+     * 删除商品
+     * @param itemId
+     * @return
+     */
     @RequestMapping("deleteItemById")
     public Integer deleteItemById(Long itemId){
         return itemService.deleteItemById(itemId);
+    }
+
+    /**
+     * 根据itemId查询商品信息
+     * @param itemId
+     * @return
+     */
+    @RequestMapping("/preUpdateItem")
+    Map<String, Object> preUpdateItem(Long itemId){
+        return itemService.preUpdateItem(itemId);
+    }
+
+    /**
+     * 修改商品
+     * @param tbItem
+     * @param desc
+     * @param itemParams
+     * @return
+     */
+    @RequestMapping("/updateTbItem")
+    Integer updateTbItem(@RequestBody TbItem tbItem,String desc,String itemParams){
+        return itemService.updateTbItem(tbItem,desc,itemParams);
     }
 
 

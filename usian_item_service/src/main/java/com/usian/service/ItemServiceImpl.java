@@ -2,10 +2,7 @@ package com.usian.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.usian.mapper.TbItemDescMapper;
-import com.usian.mapper.TbItemMapper;
-import com.usian.mapper.TbItemParamItemMapper;
-import com.usian.mapper.TbItemParamMapper;
+import com.usian.mapper.*;
 import com.usian.pojo.*;
 import com.usian.utils.IDUtils;
 import com.usian.utils.PageResult;
@@ -14,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -29,6 +28,8 @@ public class ItemServiceImpl implements ItemService{
     @Autowired
     TbItemParamItemMapper itemParamItemMapper;
 
+    @Autowired
+    TbItemCatMapper itemCatMapper;
 
     @Override
     public TbItem selectItemInfo(Long itemId) {
@@ -83,6 +84,56 @@ public class ItemServiceImpl implements ItemService{
     @Override
     public Integer deleteItemById(Long itemId) {
         return itemMapper.deleteByPrimaryKey(itemId);
+    }
+
+    @Override
+    public Map<String, Object> preUpdateItem(Long itemId) {
+        Map<String, Object> map = new HashMap<>();
+        //根据商品 ID 查询商品
+        TbItem item = this.itemMapper.selectByPrimaryKey(itemId);
+        map.put("item", item);
+        //根据商品 ID 查询商品描述
+        TbItemDesc itemDesc = this.itemDescMapper.selectByPrimaryKey(itemId);
+        map.put("itemDesc", itemDesc.getItemDesc());
+        //根据商品 ID 查询商品类目
+        TbItemCat itemCat = this.itemCatMapper.selectByPrimaryKey(item.getCid());
+        map.put("itemCat", itemCat.getName());
+        //根据商品 ID 查询商品规格参数
+        TbItemParamItemExample example = new TbItemParamItemExample();
+        TbItemParamItemExample.Criteria criteria = example.createCriteria();
+        criteria.andItemIdEqualTo(itemId);
+        List<TbItemParamItem> list =
+                this.itemParamItemMapper.selectByExampleWithBLOBs(example);
+        if (list != null && list.size() > 0) {
+            map.put("itemParamItem", list.get(0).getParamData());
+        }
+        return map;
+    }
+
+    @Override
+    public Integer updateTbItem(TbItem tbItem, String desc, String itemParams) {
+        Date date = new Date();
+        tbItem.setUpdated(date);
+        int tbItemNum = itemMapper.updateByPrimaryKeySelective(tbItem);
+        //补齐商品描述对象
+        TbItemDesc itemDesc = new TbItemDesc();
+        itemDesc.setItemId(tbItem.getId());
+        itemDesc.setItemDesc(desc);
+        itemDesc.setUpdated(date);
+        int tbitemDescNum = itemDescMapper.updateByPrimaryKeySelective(itemDesc);
+        //补齐商品规格参数
+        TbItemParamItemExample example = new TbItemParamItemExample();
+        TbItemParamItemExample.Criteria criteria = example.createCriteria();
+        criteria.andItemIdEqualTo(tbItem.getId());
+        List<TbItemParamItem> itemParamItems = itemParamItemMapper.selectByExampleWithBLOBs(example);
+
+        TbItemParamItem tbItemParamItem = new TbItemParamItem();
+        tbItemParamItem.setId(itemParamItems.get(0).getId());
+        tbItemParamItem.setUpdated(date);
+        tbItemParamItem.setItemId(tbItem.getId());
+        tbItemParamItem.setParamData(itemParams);
+        int itemParamItmeNum = itemParamItemMapper.updateByPrimaryKeySelective(tbItemParamItem);
+        return tbItemNum+tbitemDescNum+itemParamItmeNum;
     }
 
 

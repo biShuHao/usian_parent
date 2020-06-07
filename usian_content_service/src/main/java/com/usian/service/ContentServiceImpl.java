@@ -6,6 +6,7 @@ import com.github.pagehelper.PageInfo;
 import com.usian.mapper.TbContentMapper;
 import com.usian.pojo.TbContent;
 import com.usian.pojo.TbContentExample;
+import com.usian.redis.RedisClient;
 import com.usian.utils.AdNode;
 import com.usian.utils.PageResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +37,14 @@ public class ContentServiceImpl implements ContentService {
     @Value("${AD_WIDTHB}")
     private Integer AD_WIDTHB;
 
+    @Value("${PORTAL_AD_KEY}")
+    private String PORTAL_AD_KEY;
+
     @Autowired
     TbContentMapper tbContentMapper;
+
+    @Autowired
+    private RedisClient redisClient;
 
     @Override
     public PageResult selectTbContentAllByCategoryId(Integer page,Integer rows,Long categoryId) {
@@ -60,16 +67,32 @@ public class ContentServiceImpl implements ContentService {
         Date date = new Date();
         tbContent.setCreated(date);
         tbContent.setUpdated(date);
-        return tbContentMapper.insertSelective(tbContent);
+        int i = tbContentMapper.insertSelective(tbContent);
+        deleteRedis();
+        return i;
     }
 
     @Override
     public Integer deleteContentByIds(Long ids) {
-        return tbContentMapper.deleteByPrimaryKey(ids);
+        int i = tbContentMapper.deleteByPrimaryKey(ids);
+        deleteRedis();
+        return i;
+    }
+
+    //缓存同步
+    private void deleteRedis(){
+        redisClient.hdel(PORTAL_AD_KEY,AD_CATEGORY_ID.toString());
     }
 
     @Override
     public List<AdNode> selectFrontendContentByAD() {
+        //查询缓存
+        List<AdNode> list = (List<AdNode>) redisClient.hget(PORTAL_AD_KEY, AD_CATEGORY_ID.toString());
+        //如果list有值则返回
+        if(list!=null){
+            return list;
+        }
+        //没值则查询数据库
         // 查询TbContent
         TbContentExample tbContentExample = new TbContentExample();
         TbContentExample.Criteria criteria = tbContentExample.createCriteria();
@@ -88,6 +111,8 @@ public class ContentServiceImpl implements ContentService {
             adNode.setWidthB(AD_WIDTHB);
             adNodeList.add(adNode);
         }
+        //添加到缓存
+        redisClient.hset(PORTAL_AD_KEY,AD_CATEGORY_ID.toString(),adNodeList);
         return adNodeList;
     }
 
